@@ -1,0 +1,22 @@
+body {
+  font-family: Trebuchet MS,arial,sans-serif;
+  color: #283d88
+}
+
+.right_aligned {
+	height: 10em;
+	line-height: 1.25em;
+}
+
+.right_aligned label {
+	display: block;
+	float: left;
+	clear: left;
+	width: 200px;
+	padding-right: 1em;
+	text-align: right;
+}
+
+.right_aligned select, .right_aligned input,select {
+	display: block;
+}
