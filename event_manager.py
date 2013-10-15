@@ -49,8 +49,25 @@ class MainPage(webapp2.RequestHandler):
 
 class Register(webapp2.RequestHandler):
 
+    def get(self):
+        event_name= "20130101"
+        if event_name:
+            ancestor_key = event_key(event_name)
+            registrations_query = Registration.query(ancestor=ancestor_key).order(Registration.name)
+            registrations = registrations_query.fetch(100)
+
+            template_values = {
+                'registrations': registrations,
+                'event_name': urllib.quote_plus(event_name),
+            }
+
+            template = JINJA_ENVIRONMENT.get_template('register.html')
+            self.response.write(template.render(template_values))
+        else:
+            self.response.write('Event name not specified')
+        
     def post(self):
-        event_name= self.request.get('event_name')
+        event_name= "20130101"
         logging.debug(event_name)
         ancestor_key = event_key(event_name)
         registration = Registration(parent=ancestor_key)
@@ -58,7 +75,7 @@ class Register(webapp2.RequestHandler):
         registration.name= self.request.get('name')
         registration.twitter_handle = self.request.get('twitter_handle')
         registration.put()
-        self.redirect('/?event_name=' + event_name)
+        self.redirect('/register')
 
 
 application = webapp2.WSGIApplication([

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <h1>Next Agile Yorkshire Meetup: {{ event_name }}</h1>
+    <h2>Registrations</h2>
+    <ul>
+    {% for registration in registrations %}
+        <li>{{ '%s (%s)' % ( registration.name, registration.twitter_handle) }}</li>
+    {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h2>Register here for the next event</h2>
+    <form class="right_aligned" action="/register" method="post">
+      <label for="email_address">Email address</label><input type="textbox" name="email_address" />
+      <label for=name">Name</label><input type="textbox" name="name"/>
+      <label for="twitter_handle">Twitter handle</label><input type="textbox" name="twitter_handle"/>
+      <input type="submit" value="Register for event"></div>
+    </form>
+
+  </body>
+</html>
+{% endautoescape %}
