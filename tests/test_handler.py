@@ -1,15 +1,15 @@
 import unittest
 import webapp2
 
-import helloworld
+import event_manager  
 
 class TestHandlers(unittest.TestCase):
    def test_hello(self):
        # Build a request object passing the URI path to be tested.
        # You can also pass headers, query arguments etc.
-       request = webapp2.Request.blank('/')
+       request = webapp2.Request.blank('/registrations?event_name=20130101')
        # Get a response for that request.
-       response = request.get_response(helloworld.application)
+       response = request.get_response(event_manager.application)
 
        # Let's check if the response is correct.
        self.assertEqual(response.status_int, 200)

@@ -1,8 +1,10 @@
 from webtest import TestApp
-from helloworld import application
+from event_manager import application
 
 app = TestApp(application)
 
-def test_index():
-    response = app.get('/')
-    assert 'Hello t\'World!' in str(response)
+def test_registrationIncludesTwitterhandle():
+    response = app.get('/registrations?event_name=20130101')
+    assert '@neilbmclaughlin' in str(response)
+
+

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <h1>Agile Yorkshire Meetups</h1>
+    <ul>
+    {% for event in events %}
+        <li>{{ '%s (%s)' % ( event.date.strftime("%d %b %Y"), event.description )  }}</li>
+    {% endfor %}
+    </ul>
+
+    <hr>
+
+    <form class="right_aligned" action="/events" method="post">
+      <label for="event_date">Event Date</label><input type="textbox" name="event_date" />
+      <label for="event_description">Description</label><input type="textbox" name="event_description" />
+      <input type="submit" value="Create event"></div>
+    </form>
+
+  </body>
+</html>
+{% endautoescape %}
