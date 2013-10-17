@@ -19,4 +19,5 @@ body {
 
 .right_aligned select, .right_aligned input,select {
 	display: block;
+    width: 50%;
 }
