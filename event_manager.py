@@ -28,7 +28,7 @@ class Event(ndb.Model):
 
     @staticmethod
     def get_next_event_by_date():
-        next_event = Event.query(Event.date >= datetime.datetime.now()).order(Event.date).fetch(1)
+        next_event = Event.query(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(1)
         return next_event[0] if next_event else None
 
 
@@ -84,7 +84,8 @@ class Register(webapp2.RequestHandler):
 
 class Events(webapp2.RequestHandler):
     def get(self):
-        events = Event.query().order(-Event.date).fetch(100)
+        nextEvent = Event.query(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(1)
+        events = Event.query(Event.date >= datetime.datetime.now()).order(-Event.date).fetch(100)
         template_values = {
            'events': events,
          }
