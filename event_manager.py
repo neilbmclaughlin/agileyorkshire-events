@@ -10,9 +10,14 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'])
 
+DEFAULT_GROUP_NAME = 'AgileYorkshire'
+
 def event_key(event_name):
     """Constructs a Datastore key for a Registration entity with event_date."""
     return ndb.Key('Event', event_name)
+
+def group_key(group_name=DEFAULT_GROUP_NAME):
+    return ndb.Key('Group', group_name)
 
 
 class Registration(ndb.Model):
@@ -25,6 +30,7 @@ class Registration(ndb.Model):
 class Event(ndb.Model):
     date = ndb.DateTimeProperty(indexed=True)
     description = ndb.StringProperty(indexed=True)
+    capacity = ndb.IntegerProperty()
 
     @staticmethod
     def get_next_event_by_date():
@@ -63,6 +69,7 @@ class Register(webapp2.RequestHandler):
             registrations = Registration.query(ancestor=next_event.key).fetch(100)
 
             template_values = {
+                'registrations_remaining': ( next_event.capacity - Registration.query(ancestor=next_event.key).count(next_event.capacity) ),
                 'registrations': registrations,
                 'event': next_event,
             }
@@ -84,8 +91,7 @@ class Register(webapp2.RequestHandler):
 
 class Events(webapp2.RequestHandler):
     def get(self):
-        nextEvent = Event.query(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(1)
-        events = Event.query(Event.date >= datetime.datetime.now()).order(-Event.date).fetch(100)
+        events = Event.query(ancestor=group_key()).filter(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(100)
         template_values = {
            'events': events,
          }
@@ -94,9 +100,10 @@ class Events(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
         
     def post(self):
-        event = Event()
+        event = Event(parent=group_key())
         event.date = datetime.datetime.strptime( self.request.get('event_date'), "%d %b %Y")
         event.description = self.request.get('event_description')
+        event.capacity = int(self.request.get('event_capacity'))
         event.put()
         self.redirect('/events')
 

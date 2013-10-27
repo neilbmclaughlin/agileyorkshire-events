@@ -13,7 +13,11 @@
     {% endfor %}
     </ul>
 
+    <p>There are {{ registrations_remaining }} places remaining</p>
+
     <hr>
+
+    {% if registrations_remaining > 0 %}
 
     <h2>Register here for the next event</h2>
     <form class="right_aligned" action="/register" method="post">
@@ -22,6 +26,8 @@
       <label for="twitter_handle">Twitter handle</label><input type="textbox" name="twitter_handle"/>
       <input type="submit" value="Register for event"></div>
     </form>
+
+    {% endif %}
 
   </body>
 </html>

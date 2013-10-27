@@ -6,17 +6,28 @@
   </head>
   <body>
     <h1>Agile Yorkshire Meetups</h1>
-    <ul>
-    {% for event in events %}
-        <li>{{ '%s (%s)' % ( event.date.strftime("%d %b %Y"), event.description )  }}</li>
-    {% endfor %}
-    </ul>
+    <table border="1">
+        <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Capacity</th>
+        </tr>
+        {% for event in events %}
+        <tr>
+            <td>{{ event.date.strftime("%d %b %Y") }}</td>
+            <td>{{ event.description  }}</td>
+            <td>{{ event.capacity  }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
 
     <hr>
 
     <form class="right_aligned" action="/events" method="post">
       <label for="event_date">Event Date</label><input type="textbox" name="event_date" />
       <label for="event_description">Description</label><input type="textbox" name="event_description" />
+      <label for="event_capacity">Capacity</label><input type="textbox" name="event_capacity" />
       <input type="submit" value="Create event"></div>
     </form>
 
