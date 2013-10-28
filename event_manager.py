@@ -3,6 +3,8 @@ import urllib
 import datetime
 
 from google.appengine.ext import ndb
+from google.appengine.api import mail
+
 import webapp2
 import jinja2
 
@@ -25,6 +27,7 @@ class Registration(ndb.Model):
     name = ndb.StringProperty(indexed=True)
     twitter_handle = ndb.StringProperty(indexed=True)
     date_registered = ndb.DateTimeProperty(auto_now_add=True)
+    confirmed = ndb.BooleanProperty()
 
 
 class Event(ndb.Model):
@@ -85,8 +88,29 @@ class Register(webapp2.RequestHandler):
         registration.email_address = self.request.get('email_address')
         registration.name= self.request.get('name')
         registration.twitter_handle = self.request.get('twitter_handle')
-        registration.put()
+        registration.confirmed = False
+        key = registration.put()
+
+        mail.send_mail(
+            'neil.mclaughlin@agileyorkshire.org',
+            registration.email_address,
+            'click link to confirm',
+            self.url_for('confirm_registration', _full=True) + '?k=' + key.urlsafe())
+
         self.redirect('/register')
+
+
+class ConfirmRegistration(webapp2.RequestHandler):
+
+    def get(self):
+
+        registration_key = ndb.Key(urlsafe=self.request.get('k'))
+
+        registration = registration_key.get()
+        registration.confirmed = True
+        registration.put()
+
+        self.response.write('Registration for %s confirmed.' % ( registration_key.get().name) )
 
 
 class Events(webapp2.RequestHandler):
@@ -109,6 +133,7 @@ class Events(webapp2.RequestHandler):
 
 application = webapp2.WSGIApplication([
     ('/registrations', Registrations),
+    webapp2.Route(r'/confirm_registration', handler=ConfirmRegistration, name='confirm_registration'),
     ('/events', Events),
     ('/register', Register),
 ], debug=True)
