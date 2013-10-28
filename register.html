@@ -9,7 +9,7 @@
     <h2>Registrations</h2>
     <ul>
     {% for registration in registrations %}
-        <li>{{ '%s (%s)' % ( registration.name, registration.twitter_handle) }}</li>
+        <li>{{ '%s (%s) %s' % ( registration.name, registration.twitter_handle, 'confirmed' if registration.confirmed else 'unconfirmed') }}</li>
     {% endfor %}
     </ul>
 

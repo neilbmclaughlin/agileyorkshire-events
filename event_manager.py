@@ -7,6 +7,8 @@ from google.appengine.api import mail
 
 import webapp2
 import jinja2
+from models.event import Event
+from models.registration import Registration
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -20,25 +22,6 @@ def event_key(event_name):
 
 def group_key(group_name=DEFAULT_GROUP_NAME):
     return ndb.Key('Group', group_name)
-
-
-class Registration(ndb.Model):
-    email_address = ndb.StringProperty(indexed=True)
-    name = ndb.StringProperty(indexed=True)
-    twitter_handle = ndb.StringProperty(indexed=True)
-    date_registered = ndb.DateTimeProperty(auto_now_add=True)
-    confirmed = ndb.BooleanProperty()
-
-
-class Event(ndb.Model):
-    date = ndb.DateTimeProperty(indexed=True)
-    description = ndb.StringProperty(indexed=True)
-    capacity = ndb.IntegerProperty()
-
-    @staticmethod
-    def get_next_event_by_date():
-        next_event = Event.query(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(1)
-        return next_event[0] if next_event else None
 
 
 class Registrations(webapp2.RequestHandler):

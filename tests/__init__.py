@@ -1,1 +1,2 @@
-from myfirsttest import MyFirstTest
+from RegistrationHandlerTests import RegistrationHandlerTests
+from EventHandlerTests import EventHandlerTests

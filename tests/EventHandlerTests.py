@@ -1,11 +1,14 @@
 import unittest
-from webtest import TestApp
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
-from event_manager import application
+from datetime import datetime
 
-class MyFirstTest(unittest.TestCase):
+from event_manager import application
+from models.event import Event
+
+
+class EventHandlerTests(unittest.TestCase):
 
     def setUp(self):
 
@@ -19,20 +22,16 @@ class MyFirstTest(unittest.TestCase):
         self.testbed.init_datastore_v3_stub()
 
         # create a test server for us to prod
-        self.testapp = TestApp(application)
+        # self.testapp = TestApp(application)
 
-    def tearDown(self):            
+    def tearDown(self):
         self.testbed.deactivate()
 
-    def testFetchEventURL(self):
+    def testInsertEvent(self):
+        event = Event(parent=ndb.Key('Group', 'Agile'))
+        event.date = datetime.now()
+        event.description = 'An event'
+        event.capacity = 20
+        event.put()
+        self.assertEqual(1, len(Event.query().fetch(2)))
 
-        result = self.testapp.get("/events")
-        self.assertEqual(result.status, "200 OK")
-        assert 'Agile Yorkshire Meetups' in result
-
-    def testFetchRegisterURL(self):
-
-        result = self.testapp.get("/register")
-        self.assertEqual(result.status, "200 OK")
-        print result
-        assert 'Register here for the next event' in result
