@@ -5,9 +5,11 @@ __author__ = 'neil'
 
 
 class Event(ndb.Model):
-    date = ndb.DateTimeProperty(indexed=True)
+    date = ndb.DateTimeProperty()
+    title = ndb.StringProperty()
     description = ndb.StringProperty(indexed=False)
     capacity = ndb.IntegerProperty()
+    image = ndb.BlobProperty()
 
     @staticmethod
     def get_next_event_by_date():

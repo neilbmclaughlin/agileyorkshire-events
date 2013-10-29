@@ -35,7 +35,7 @@ class RegistrationTests(unittest.TestCase):
     def tearDown(self):            
         self.testbed.deactivate()
 
-    def create_event(self, capacity=20):
+    def create_event(self, capacity):
         event = Event(parent=ndb.Key('Group', 'AgileYorkshire'))
         event.date = datetime.datetime.now() + datetime.timedelta(days=1)
         event.description = 'An event'
@@ -51,7 +51,7 @@ class RegistrationTests(unittest.TestCase):
         return participant
 
     def testFetchRegisterURL(self):
-        self.create_event()
+        self.create_event(capacity=20)
 
         result = self.testapp.get("/register")
         self.assertEqual(result.status, "200 OK")
@@ -96,7 +96,7 @@ class RegistrationTests(unittest.TestCase):
         self.assertEqual('neil.mclaughlin@agileyorkshire.org', messages[0].sender)
 
 
-    def test_WhenEventIsAtCapacityThenItShouldNotBePossibleToRegister(self):
+    def test_WhenEventIsAtCapacityItShouldNotBePossibleToRegister(self):
 
         #Arrange
         event = self.create_event(capacity=3)

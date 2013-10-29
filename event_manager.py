@@ -109,14 +109,31 @@ class Events(webapp2.RequestHandler):
     def post(self):
         event = Event(parent=group_key())
         event.date = datetime.datetime.strptime( self.request.get('event_date'), "%d %b %Y")
+        event.title = self.request.get('event_title')
         event.description = self.request.get('event_description')
         event.capacity = int(self.request.get('event_capacity'))
+        event_image = self.request.get('event_image')
+        event.image = event_image
         event.put()
         self.redirect('/events')
+
+
+class Image(webapp2.RequestHandler):
+    def get(self):
+        image_event_key = ndb.Key(urlsafe=self.request.get('k'))
+
+        event = image_event_key.get()
+
+        if event.image:
+            self.response.headers['Content-Type'] = 'image/png'
+            self.response.out.write(event.image)
+        else:
+            self.response.out.write('No image')
 
 application = webapp2.WSGIApplication([
     ('/registrations', Registrations),
     webapp2.Route(r'/confirm_registration', handler=ConfirmRegistration, name='confirm_registration'),
     ('/events', Events),
     ('/register', Register),
+    ('/images', Image),
 ], debug=True)

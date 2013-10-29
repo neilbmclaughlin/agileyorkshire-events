@@ -5,7 +5,15 @@
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
-    <h1>Next Agile Yorkshire Meetup: {{ event.date.strftime("%d %b %Y") }}, {{ event.description }}</h1>
+    <h1>Next Agile Yorkshire Meetup: {{ event.date.strftime("%d %b %Y") }}</h1>
+    <div style="font-family: 'Lucida Grande', 'Lucida Sans Unicode', Arial, sans-serif; font-size: 13px; line-height: 20px; text-align: left;">
+      <table>
+          <tr style="vertical-align:top">
+              <td><img border="0" src="/images?k={{ event.key.urlsafe() }}"></td>
+              <td><h2>{{ event.title }}</h2><p>{{ event.description }}</p></td>
+          </tr>
+      </table>
+    </div>
     <h2>Registrations</h2>
     <ul>
     {% for registration in registrations %}

@@ -17,14 +17,18 @@
     <table border="1">
         <tr>
             <th>Date</th>
+            <th>Title</th>
             <th>Description</th>
             <th>Capacity</th>
+            <th>Image</th>
         </tr>
         {% for event in events %}
         <tr>
             <td>{{ event.date.strftime("%d %b %Y") }}</td>
+            <td>{{ event.title }}</td>
             <td>{{ event.description  }}</td>
             <td>{{ event.capacity  }}</td>
+            <td><img border="0" src="/images?k={{ event.key.urlsafe() }}"></td>
         </tr>
         {% endfor %}
 
@@ -32,13 +36,17 @@
 
     <hr>
 
-    <form class="right_aligned" action="/events" method="post">
+    <form class="right_aligned" enctype="multipart/form-data" action="/events" method="post">
       <label for="event_date">Event Date</label>
         <input type="textbox" id="datepicker" name="event_date" />
+      <label for="event_title">Title</label>
+        <input type="textbox" name="event_title" />
       <label for="event_description">Description</label>
         <textarea name="event_description" rows="10" cols="60"></textarea>
       <label for="event_capacity">Capacity</label>
         <input type="textbox" name="event_capacity" />
+      <label>Image</label>
+      <input type="file" name="event_image"/>
       <input type="submit" value="Create event"></div>
     </form>
 

@@ -1,2 +1,2 @@
-from RegistrationTests import RegistrationHandlerTests
+from RegistrationTests import RegistrationTests
 from EventTests import EventTests
