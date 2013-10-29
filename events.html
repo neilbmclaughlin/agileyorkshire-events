@@ -2,7 +2,15 @@
 {% autoescape true %}
 <html>
 <head>
+    <link type="text/css" rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    <script>
+      $(function() {
+        $("#datepicker").datepicker( { dateFormat: "d M yy"} );
+      });
+    </script>
   </head>
   <body>
     <h1>Agile Yorkshire Meetups</h1>
@@ -25,9 +33,12 @@
     <hr>
 
     <form class="right_aligned" action="/events" method="post">
-      <label for="event_date">Event Date</label><input type="textbox" name="event_date" />
-      <label for="event_description">Description</label><input type="textbox" name="event_description" />
-      <label for="event_capacity">Capacity</label><input type="textbox" name="event_capacity" />
+      <label for="event_date">Event Date</label>
+        <input type="textbox" id="datepicker" name="event_date" />
+      <label for="event_description">Description</label>
+        <textarea name="event_description" rows="10" cols="60"></textarea>
+      <label for="event_capacity">Capacity</label>
+        <input type="textbox" name="event_capacity" />
       <input type="submit" value="Create event"></div>
     </form>
 

@@ -6,7 +6,7 @@ __author__ = 'neil'
 
 class Event(ndb.Model):
     date = ndb.DateTimeProperty(indexed=True)
-    description = ndb.StringProperty(indexed=True)
+    description = ndb.StringProperty(indexed=False)
     capacity = ndb.IntegerProperty()
 
     @staticmethod
