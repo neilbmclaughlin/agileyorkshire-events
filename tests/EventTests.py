@@ -8,7 +8,7 @@ from event_manager import application
 from models.event import Event
 
 
-class EventHandlerTests(unittest.TestCase):
+class EventTests(unittest.TestCase):
 
     def setUp(self):
 
