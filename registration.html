@@ -8,7 +8,12 @@
     <li>{{ registration.name }}</li>
     <li>{{ registration.email_address }}</li>
     <li>{{ registration.twitter_handle }}</li>
+    <li>{{ 'Confirmed' if registration.confirmed else 'Unconfirmed' }}</li>
 </ul>
-<a href="{{confirm_link}}">Confirm</a>
-</body>
+<form name="confirm" action="{{confirm_link}}" method="post">
+    <input type="submit" value="Confirm">
+</form></body>
+<form name="cancel" action="{{cancel_link}}" method="post">
+    <input type="submit" value="Cancel">
+</form></body>
 </html>

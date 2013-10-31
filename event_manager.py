@@ -54,11 +54,13 @@ class RegistrationHandler(webapp2.RequestHandler):
         registration = registration_key.get()
 
         confirm_link = self.url_for('confirm_registration', registration_id=registration_id)
+        cancel_link = self.url_for('cancel_registration', registration_id=registration_id)
 
         print registration
         template_values = {
             'registration': registration,
             'confirm_link' : confirm_link,
+            'cancel_link' : cancel_link,
         }
 
         template = JINJA_ENVIRONMENT.get_template('registration.html')
@@ -109,14 +111,24 @@ class RegisterHandler(webapp2.RequestHandler):
 
 class ConfirmationHandler(webapp2.RequestHandler):
 
-    def get(self, registration_id):
+    def post(self, registration_id):
 
         registration_key = ndb.Key(urlsafe=registration_id)
         registration = registration_key.get()
         registration.confirmed = True
         registration.put()
 
-        self.response.write('Registration for %s confirmed.' % ( registration_key.get().name) )
+        self.redirect('/register')
+
+
+class CancellationHandler(webapp2.RequestHandler):
+
+    def post(self, registration_id):
+
+        registration_key = ndb.Key(urlsafe=registration_id)
+        registration_key.delete()
+
+        self.redirect('/register')
 
 
 class EventsHandler(webapp2.RequestHandler):
@@ -156,6 +168,7 @@ class ImagesHandler(webapp2.RequestHandler):
 application = webapp2.WSGIApplication([
     ('/registrations', RegistrationsHandler),
     webapp2.Route(r'/confirm_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=ConfirmationHandler, name='confirm_registration'),
+    webapp2.Route(r'/cancel_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=CancellationHandler, name='cancel_registration'),
     ('/events', EventsHandler),
     ('/register', RegisterHandler),
     webapp2.Route(r'/registration/<registration_id:[a-zA-Z0-9-_]+>', handler=RegistrationHandler, name='registration'),

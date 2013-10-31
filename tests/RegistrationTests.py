@@ -47,6 +47,7 @@ class RegistrationTests(unittest.TestCase):
         participant = Registration(parent=event.key)
         participant.name = name
         participant.email_address = name + '@home.com'
+        participant.twitter_handle = '@' + name
         participant.put()
         return participant
 
@@ -57,7 +58,6 @@ class RegistrationTests(unittest.TestCase):
         self.assertEqual(result.status, "200 OK")
         assert 'Register here for the next event' in result
         assert 'There are 20 places remaining' in result
-
 
     def test_PostingARegistrationShouldAddToListUpdatePlacesRemainingCount(self):
 
@@ -113,8 +113,7 @@ class RegistrationTests(unittest.TestCase):
         assert 'form' not in response
         assert 'There are 0 places remaining' in response
 
-
-    def test_RetrieveRegistrationDetails(self):
+    def test_ViewRegistrationDetails(self):
 
         #Arrange
         event = self.create_event(capacity=3)
@@ -127,9 +126,11 @@ class RegistrationTests(unittest.TestCase):
         self.assertEqual(response.status, "200 OK")
 
         assert 'fred' in response
+        assert '@fred' in response
+        assert 'fred@home.com' in response
         assert 'Confirm' in response
 
-    def CancelRegistration(self):
+    def test_ConfirmRegistration(self):
 
         #Arrange
         event = self.create_event(capacity=3)
@@ -138,7 +139,24 @@ class RegistrationTests(unittest.TestCase):
         p3 = self.create_registrant(event, 'fred')
 
         #Act
-        response = self.testapp.get("/registration/" + p3.key.urlsafe())
+        response = self.testapp.post("/confirm_registration/" + p3.key.urlsafe()).follow()
+
+        #Assert
+        self.assertEqual(response.status, "200 OK")
+        assert 'bob' in response
+        assert 'bill' in response
+        assert 'fred' in response
+
+    def test_CancelRegistration(self):
+
+        #Arrange
+        event = self.create_event(capacity=3)
+        p1 = self.create_registrant(event, 'bob')
+        p2 = self.create_registrant(event, 'bill')
+        p3 = self.create_registrant(event, 'fred')
+
+        #Act
+        response = self.testapp.post("/cancel_registration/" + p3.key.urlsafe()).follow()
 
         #Assert
         self.assertEqual(response.status, "200 OK")
