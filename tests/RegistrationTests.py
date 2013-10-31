@@ -76,10 +76,10 @@ class RegistrationTests(unittest.TestCase):
         assert '@bob' in response
         assert 'There are 19 places remaining' in response
 
-    def test_PostingARegistrationShouldSendAConfirmationEmail(self):
+    def test_PostingARegistrationShouldSendAConfirmationEmailWithLink(self):
 
         #Arrange
-        self.create_event()
+        self.create_event(capacity=20)
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
 
         form = self.testapp.get("/register").form
@@ -91,10 +91,11 @@ class RegistrationTests(unittest.TestCase):
         response = form.submit().follow()
 
         #Assert
+        registration = Registration.query().fetch(1)[0];
         messages = self.mail_stub.get_sent_messages(to='bob@home.com')
         self.assertEqual(1, len(messages))
         self.assertEqual('neil.mclaughlin@agileyorkshire.org', messages[0].sender)
-
+        self.assertTrue('/registration/' + registration.key.urlsafe() in messages[0].body.payload, 'email should contain a link to the registration')
 
     def test_WhenEventIsAtCapacityItShouldNotBePossibleToRegister(self):
 
@@ -111,3 +112,36 @@ class RegistrationTests(unittest.TestCase):
         self.assertEqual(response.status, "200 OK")
         assert 'form' not in response
         assert 'There are 0 places remaining' in response
+
+
+    def test_RetrieveRegistrationDetails(self):
+
+        #Arrange
+        event = self.create_event(capacity=3)
+        p1 = self.create_registrant(event, 'fred')
+
+        #Act
+        response = self.testapp.get("/registration/" + p1.key.urlsafe())
+
+        #Assert
+        self.assertEqual(response.status, "200 OK")
+
+        assert 'fred' in response
+        assert 'Confirm' in response
+
+    def CancelRegistration(self):
+
+        #Arrange
+        event = self.create_event(capacity=3)
+        p1 = self.create_registrant(event, 'bob')
+        p2 = self.create_registrant(event, 'bill')
+        p3 = self.create_registrant(event, 'fred')
+
+        #Act
+        response = self.testapp.get("/registration/" + p3.key.urlsafe())
+
+        #Assert
+        self.assertEqual(response.status, "200 OK")
+        assert 'bob' in response
+        assert 'bill' in response
+        assert 'fred' not in response

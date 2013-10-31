@@ -16,6 +16,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 DEFAULT_GROUP_NAME = 'AgileYorkshire'
 
+
 def event_key(event_name):
     """Constructs a Datastore key for a Registration entity with event_date."""
     return ndb.Key('Event', event_name)
@@ -24,7 +25,7 @@ def group_key(group_name=DEFAULT_GROUP_NAME):
     return ndb.Key('Group', group_name)
 
 
-class Registrations(webapp2.RequestHandler):
+class RegistrationsHandler(webapp2.RequestHandler):
 
     def get(self):
         event_name= self.request.get('event_name')
@@ -45,7 +46,26 @@ class Registrations(webapp2.RequestHandler):
             self.response.write('Event name not specified')
 
 
-class Register(webapp2.RequestHandler):
+class RegistrationHandler(webapp2.RequestHandler):
+
+    def get(self, registration_id):
+
+        registration_key = ndb.Key(urlsafe=registration_id)
+        registration = registration_key.get()
+
+        confirm_link = self.url_for('confirm_registration', registration_id=registration_id)
+
+        print registration
+        template_values = {
+            'registration': registration,
+            'confirm_link' : confirm_link,
+        }
+
+        template = JINJA_ENVIRONMENT.get_template('registration.html')
+        self.response.write(template.render(template_values))
+
+
+class RegisterHandler(webapp2.RequestHandler):
 
     def get(self):
 
@@ -74,21 +94,24 @@ class Register(webapp2.RequestHandler):
         registration.confirmed = False
         key = registration.put()
 
+        registration_url = self.url_for('registration', _full=True, registration_id=key.urlsafe())
+
+        print registration_url
+
         mail.send_mail(
             'neil.mclaughlin@agileyorkshire.org',
             registration.email_address,
             'click link to confirm',
-            self.url_for('confirm_registration', _full=True) + '?k=' + key.urlsafe())
+            registration_url)
 
         self.redirect('/register')
 
 
-class ConfirmRegistration(webapp2.RequestHandler):
+class ConfirmationHandler(webapp2.RequestHandler):
 
-    def get(self):
+    def get(self, registration_id):
 
-        registration_key = ndb.Key(urlsafe=self.request.get('k'))
-
+        registration_key = ndb.Key(urlsafe=registration_id)
         registration = registration_key.get()
         registration.confirmed = True
         registration.put()
@@ -96,7 +119,7 @@ class ConfirmRegistration(webapp2.RequestHandler):
         self.response.write('Registration for %s confirmed.' % ( registration_key.get().name) )
 
 
-class Events(webapp2.RequestHandler):
+class EventsHandler(webapp2.RequestHandler):
     def get(self):
         events = Event.query(ancestor=group_key()).filter(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(100)
         template_values = {
@@ -118,7 +141,7 @@ class Events(webapp2.RequestHandler):
         self.redirect('/events')
 
 
-class Image(webapp2.RequestHandler):
+class ImagesHandler(webapp2.RequestHandler):
     def get(self):
         image_event_key = ndb.Key(urlsafe=self.request.get('k'))
 
@@ -131,9 +154,10 @@ class Image(webapp2.RequestHandler):
             self.response.out.write('No image')
 
 application = webapp2.WSGIApplication([
-    ('/registrations', Registrations),
-    webapp2.Route(r'/confirm_registration', handler=ConfirmRegistration, name='confirm_registration'),
-    ('/events', Events),
-    ('/register', Register),
-    ('/images', Image),
+    ('/registrations', RegistrationsHandler),
+    webapp2.Route(r'/confirm_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=ConfirmationHandler, name='confirm_registration'),
+    ('/events', EventsHandler),
+    ('/register', RegisterHandler),
+    webapp2.Route(r'/registration/<registration_id:[a-zA-Z0-9-_]+>', handler=RegistrationHandler, name='registration'),
+    ('/images', ImagesHandler),
 ], debug=True)
