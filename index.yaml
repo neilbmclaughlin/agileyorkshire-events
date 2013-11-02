@@ -21,6 +21,11 @@ indexes:
   - name: date
     direction: desc
 
+- kind: Presentation
+  ancestor: yes
+  properties:
+  - name: event_key
+
 - kind: Registration
   ancestor: yes
   properties:

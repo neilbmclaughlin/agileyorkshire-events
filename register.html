@@ -13,6 +13,11 @@
               <td><h2>{{ event.title }}</h2><p>{{ event.description }}</p></td>
           </tr>
       </table>
+        <ul>
+        {% for presentation in presentations %}
+            <li>{{ '%s > %s' % ( presentation.name, presentation.outline ) }}</li>
+        {% endfor %}
+        </ul>
     </div>
     <h2>Registrations</h2>
     <ul>

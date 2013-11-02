@@ -36,7 +36,7 @@
 
     <hr>
 
-    <form class="right_aligned" enctype="multipart/form-data" action="/events" method="post">
+    <form class="right_aligned" action="/events" enctype="multipart/form-data" method="post">
       <label for="event_date">Event Date</label>
         <input type="textbox" id="datepicker" name="event_date" />
       <label for="event_title">Title</label>
@@ -47,6 +47,12 @@
         <input type="textbox" name="event_capacity" />
       <label>Image</label>
       <input type="file" name="event_image"/>
+      <label for="event_presentations">Presentations</label>
+        <select name="event_presentations" multiple>
+            {% for presentation in presentations %}
+               <option value="{{ presentation.name }}">{{ presentation.name }}</option>
+            {% endfor %}
+        </select>
       <input type="submit" value="Create event"></div>
     </form>
 

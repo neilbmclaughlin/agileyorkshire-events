@@ -9,6 +9,7 @@ import webapp2
 import jinja2
 from models.event import Event
 from models.registration import Registration
+from models.presentation import Presentation
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -73,6 +74,8 @@ class RegisterHandler(webapp2.RequestHandler):
 
         next_event = Event.get_next_event_by_date()
 
+        presentations = [p.get() for p in next_event.presentation_keys]
+
         if next_event:
             registrations = Registration.query(ancestor=next_event.key).fetch(100)
 
@@ -80,6 +83,7 @@ class RegisterHandler(webapp2.RequestHandler):
                 'registrations_remaining': ( next_event.capacity - Registration.query(ancestor=next_event.key).count(next_event.capacity) ),
                 'registrations': registrations,
                 'event': next_event,
+                'presentations': presentations
             }
 
             template = JINJA_ENVIRONMENT.get_template('register.html')
@@ -134,10 +138,11 @@ class CancellationHandler(webapp2.RequestHandler):
 class EventsHandler(webapp2.RequestHandler):
     def get(self):
         events = Event.query(ancestor=group_key()).filter(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(100)
+        presentations = Presentation.query(ancestor=group_key()).filter(Presentation.event_key == None).fetch(100)
         template_values = {
-           'events': events,
-         }
-
+            'events': events,
+            'presentations': presentations
+        }
         template = JINJA_ENVIRONMENT.get_template('events.html')
         self.response.write(template.render(template_values))
         
@@ -149,8 +154,32 @@ class EventsHandler(webapp2.RequestHandler):
         event.capacity = int(self.request.get('event_capacity'))
         event_image = self.request.get('event_image')
         event.image = event_image
-        event.put()
+        presentations = self.request.get_all('event_presentations')
+        p1 = Presentation.query(ancestor=group_key()).filter(Presentation.name == presentations[0]).fetch(1)[0]
+        p2 = Presentation.query(ancestor=group_key()).filter(Presentation.name == presentations[1]).fetch(1)[0]
+        event.presentation_keys = [ p1.key, p2.key ]
+        event_key = event.put()
+
+        p1.event_key = event_key
+        p1.put()
+        p2.event_key = event_key
+        p2.put()
+
         self.redirect('/events')
+
+
+class PresentationHandler(webapp2.RequestHandler):
+
+    def get(self):
+        template = JINJA_ENVIRONMENT.get_template('presentation.html')
+        self.response.write(template.render())
+
+    def post(self):
+        presentation = Presentation(parent=group_key())
+        presentation.name = self.request.get('presentation_name')
+        presentation.outline = self.request.get('presentation_outline')
+        presentation.put()
+        self.redirect('/presentation')
 
 
 class ImagesHandler(webapp2.RequestHandler):
@@ -171,6 +200,7 @@ application = webapp2.WSGIApplication([
     webapp2.Route(r'/cancel_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=CancellationHandler, name='cancel_registration'),
     ('/events', EventsHandler),
     ('/register', RegisterHandler),
+    ('/presentation', PresentationHandler),
     webapp2.Route(r'/registration/<registration_id:[a-zA-Z0-9-_]+>', handler=RegistrationHandler, name='registration'),
     ('/images', ImagesHandler),
 ], debug=True)

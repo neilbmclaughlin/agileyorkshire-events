@@ -17,7 +17,7 @@ body {
 	text-align: right;
 }
 
-.right_aligned select, .right_aligned input,select,textarea {
+.right_aligned, .right_aligned input,textarea {
 	display: block;
     width: 50%;
 }
