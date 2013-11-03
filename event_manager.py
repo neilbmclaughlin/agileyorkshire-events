@@ -18,11 +18,11 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 DEFAULT_GROUP_NAME = 'AgileYorkshire'
 
 
-def event_key(event_name):
+def get_event_key(event_name):
     """Constructs a Datastore key for a Registration entity with event_date."""
     return ndb.Key('Event', event_name)
 
-def group_key(group_name=DEFAULT_GROUP_NAME):
+def get_group_key(group_name=DEFAULT_GROUP_NAME):
     return ndb.Key('Group', group_name)
 
 
@@ -32,7 +32,7 @@ class RegistrationsHandler(webapp2.RequestHandler):
         event_name= self.request.get('event_name')
 
         if event_name:
-            ancestor_key = event_key(event_name)
+            ancestor_key = get_event_key(event_name)
             registrations_query = Registration.query(ancestor=ancestor_key).order(Registration.name)
             registrations = registrations_query.fetch(100)
 
@@ -66,6 +66,24 @@ class RegistrationHandler(webapp2.RequestHandler):
 
         template = JINJA_ENVIRONMENT.get_template('registration.html')
         self.response.write(template.render(template_values))
+
+
+class NextEventHandler(webapp2.RequestHandler):
+
+    def get(self):
+
+        next_event = Event.get_next_event_by_date()
+
+        if next_event:
+            template_values = {
+                'registrations_remaining': ( next_event.capacity - Registration.query(ancestor=next_event.key).count(next_event.capacity) ),
+                'event': next_event,
+            }
+
+            template = JINJA_ENVIRONMENT.get_template('next_event.html')
+            self.response.write(template.render(template_values))
+        else:
+            self.response.write('There is no next event setup')
 
 
 class RegisterHandler(webapp2.RequestHandler):
@@ -137,8 +155,8 @@ class CancellationHandler(webapp2.RequestHandler):
 
 class EventsHandler(webapp2.RequestHandler):
     def get(self):
-        events = Event.query(ancestor=group_key()).filter(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(100)
-        presentations = Presentation.query(ancestor=group_key()).filter(Presentation.event_key == None).fetch(100)
+        events = Event.query(ancestor=get_group_key()).filter(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(100)
+        presentations = Presentation.query(ancestor=get_group_key()).filter(Presentation.event_key == None).fetch(100)
         template_values = {
             'events': events,
             'presentations': presentations
@@ -147,7 +165,7 @@ class EventsHandler(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
         
     def post(self):
-        event = Event(parent=group_key())
+        event = Event(parent=get_group_key())
         event.date = datetime.datetime.strptime( self.request.get('event_date'), "%d %b %Y")
         event.title = self.request.get('event_title')
         event.description = self.request.get('event_description')
@@ -155,8 +173,8 @@ class EventsHandler(webapp2.RequestHandler):
         event_image = self.request.get('event_image')
         event.image = event_image
         presentations = self.request.get_all('event_presentations')
-        p1 = Presentation.query(ancestor=group_key()).filter(Presentation.name == presentations[0]).fetch(1)[0]
-        p2 = Presentation.query(ancestor=group_key()).filter(Presentation.name == presentations[1]).fetch(1)[0]
+        p1 = Presentation.query(ancestor=get_group_key()).filter(Presentation.name == presentations[0]).fetch(1)[0]
+        p2 = Presentation.query(ancestor=get_group_key()).filter(Presentation.name == presentations[1]).fetch(1)[0]
         event.presentation_keys = [ p1.key, p2.key ]
         event_key = event.put()
 
@@ -175,7 +193,7 @@ class PresentationHandler(webapp2.RequestHandler):
         self.response.write(template.render())
 
     def post(self):
-        presentation = Presentation(parent=group_key())
+        presentation = Presentation(parent=get_group_key())
         presentation.name = self.request.get('presentation_name')
         presentation.outline = self.request.get('presentation_outline')
         presentation.put()
@@ -198,6 +216,7 @@ application = webapp2.WSGIApplication([
     ('/registrations', RegistrationsHandler),
     webapp2.Route(r'/confirm_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=ConfirmationHandler, name='confirm_registration'),
     webapp2.Route(r'/cancel_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=CancellationHandler, name='cancel_registration'),
+    ('/events/next', NextEventHandler),
     ('/events', EventsHandler),
     ('/register', RegisterHandler),
     ('/presentation', PresentationHandler),
