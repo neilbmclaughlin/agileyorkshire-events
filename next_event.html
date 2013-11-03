@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <h1>Next Agile Yorkshire Meetup: {{ event.date.strftime("%d %b %Y") }}</h1>
+    <div style="font-family: 'Lucida Grande', 'Lucida Sans Unicode', Arial, sans-serif; font-size: 13px; line-height: 20px; text-align: left;">
+      <table>
+          <tr style="vertical-align:top">
+              <td><img border="0" src="/images?k={{ event.key.urlsafe() }}"></td>
+              <td><h2>{{ event.title }}</h2><p>{{ event.description }}</p></td>
+          </tr>
+      </table>
+        <ul>
+        {% for presentation in presentations %}
+            <li>{{ '%s > %s' % ( presentation.name, presentation.outline ) }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    <h2>Registrations</h2>
+    <ul>
+    {% for registration in registrations %}
+        <li>{{ '%s (%s) %s' % ( registration.name, registration.twitter_handle, 'confirmed' if registration.confirmed else 'unconfirmed') }}</li>
+    {% endfor %}
+    </ul>
+
+    <p>There are {{ registrations_remaining }} places remaining</p>
+
+    <hr>
+
+    {% if registrations_remaining > 0 %}
+
+    <h2>Register here for the next event</h2>
+    <form class="right_aligned" action="/register" method="post">
+      <label for="email_address">Email address</label><input type="textbox" name="email_address" />
+      <label for=name">Name</label><input type="textbox" name="name"/>
+      <label for="twitter_handle">Twitter handle</label><input type="textbox" name="twitter_handle"/>
+      <input type="submit" value="Register for event"></div>
+    </form>
+
+    {% endif %}
+
+  </body>
+</html>
+{% endautoescape %}
