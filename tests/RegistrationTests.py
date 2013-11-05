@@ -36,6 +36,8 @@ class RegistrationTests(unittest.TestCase):
         # create a test server for us to prod
         self.testapp = TestApp(application)
 
+        # From: https://github.com/spulec/freezegun/issues/22
+
         # datetime.utcnow() needs to stay naive.
         if not hasattr(api.FakeDatetime, '_old_utcnow'):
           @classmethod
