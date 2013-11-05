@@ -1,6 +1,7 @@
 import os
 import urllib
-import datetime
+from datetime import datetime
+from datetime import timedelta
 
 from google.appengine.ext import ndb
 from google.appengine.api import mail
@@ -92,16 +93,22 @@ class RegisterHandler(webapp2.RequestHandler):
 
         next_event = Event.get_next_event_by_date()
 
-        presentations = [p.get() for p in next_event.presentation_keys]
-
         if next_event:
+
+            registration_opens = next_event.date - timedelta(days=14)
+            registration_open = datetime.now() > registration_opens
+
+            presentations = [p.get() for p in next_event.presentation_keys]
+
             registrations = Registration.query(ancestor=next_event.key).fetch(100)
 
             template_values = {
                 'registrations_remaining': ( next_event.capacity - Registration.query(ancestor=next_event.key).count(next_event.capacity) ),
                 'registrations': registrations,
                 'event': next_event,
-                'presentations': presentations
+                'presentations': presentations,
+                'registration_open': registration_open,
+                'registration_opens': registration_opens
             }
 
             template = JINJA_ENVIRONMENT.get_template('register.html')
@@ -155,7 +162,7 @@ class CancellationHandler(webapp2.RequestHandler):
 
 class EventsHandler(webapp2.RequestHandler):
     def get(self):
-        events = Event.query(ancestor=get_group_key()).filter(Event.date >= datetime.datetime.now()).order(+Event.date).fetch(100)
+        events = Event.query(ancestor=get_group_key()).filter(Event.date >= datetime.now()).order(+Event.date).fetch(100)
         presentations = Presentation.query(ancestor=get_group_key()).filter(Presentation.event_key == None).fetch(100)
         template_values = {
             'events': events,
@@ -166,7 +173,7 @@ class EventsHandler(webapp2.RequestHandler):
         
     def post(self):
         event = Event(parent=get_group_key())
-        event.date = datetime.datetime.strptime( self.request.get('event_date'), "%d %b %Y")
+        event.date = datetime.strptime( self.request.get('event_date'), "%d %b %Y")
         event.title = self.request.get('event_title')
         event.description = self.request.get('event_description')
         event.capacity = int(self.request.get('event_capacity'))

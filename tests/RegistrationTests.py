@@ -1,13 +1,17 @@
 import unittest
 from webtest import TestApp
-from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 from event_manager import application
 from models.event import Event
 from models.registration import Registration
-
-import datetime
+from freezegun import freeze_time
+from datetime import datetime
+from datetime import timedelta
+from freezegun import api
+from google.appengine.api import datastore_types
+from google.appengine.ext import db, ndb
+import pytz
 
 
 class RegistrationTests(unittest.TestCase):
@@ -32,12 +36,53 @@ class RegistrationTests(unittest.TestCase):
         # create a test server for us to prod
         self.testapp = TestApp(application)
 
+        # datetime.utcnow() needs to stay naive.
+        if not hasattr(api.FakeDatetime, '_old_utcnow'):
+          @classmethod
+          def naive_utcnow(cls):
+            return cls._old_utcnow().replace(tzinfo=None)
+
+          api.FakeDatetime._old_utcnow = api.FakeDatetime.utcnow
+          api.FakeDatetime.utcnow = naive_utcnow
+
+        # ext.db.DateProperty.now() should return a FakeDate.
+        @staticmethod
+        def today():
+          return api.date_to_fakedate(api.real_datetime.now().date())
+        db.DateProperty.now = today
+
+        # ext.ndb.DatetimeProperty.now() should return a naive FakeDatetime.
+        def now(self):
+          now = datetime.now()
+          if now.tzinfo:
+            now = now.astimezone(pytz.utc).replace(tzinfo=None)
+          return api.datetime_to_fakedatetime(now)
+        ndb.DateTimeProperty._now = now
+
+        # Validating FakeDatetime's should work as expected.
+        def validate_fakedatetime(name, value):
+          return api.datetime_to_fakedatetime(value)
+
+        # De-serializing a FakeDatetime should be the same as a regular datetime.
+        def load_datetime(value):
+          loaded_value = datastore_types._When(value)
+          if issubclass(datetime, api.FakeDatetime):
+            loaded_value = api.datetime_to_fakedatetime(loaded_value)
+          return loaded_value
+
+        # Tell App Engine how to handle FakeDatetime objects.
+        datastore_types._VALIDATE_PROPERTY_VALUES[api.FakeDatetime] = validate_fakedatetime
+        datastore_types._PACK_PROPERTY_VALUES[api.FakeDatetime] = datastore_types.PackDatetime
+        datastore_types._PROPERTY_MEANINGS[api.FakeDatetime] = datastore_types.entity_pb.Property.GD_WHEN
+        datastore_types._PROPERTY_CONVERSIONS[datastore_types.entity_pb.Property.GD_WHEN] = load_datetime
+
+
     def tearDown(self):            
         self.testbed.deactivate()
 
     def create_event(self, capacity):
         event = Event(parent=ndb.Key('Group', 'AgileYorkshire'))
-        event.date = datetime.datetime.now() + datetime.timedelta(days=1)
+        event.date = datetime.now() + timedelta(days=5)
         event.description = 'An event'
         event.capacity = capacity
         event.put()
@@ -51,10 +96,13 @@ class RegistrationTests(unittest.TestCase):
         participant.put()
         return participant
 
-    def testFetchRegisterURL(self):
+    def test_FetchRegisterURL(self):
         self.create_event(capacity=20)
 
         result = self.testapp.get("/register")
+
+        print result
+
         self.assertEqual(result.status, "200 OK")
         assert 'Register here for the next event' in result
         assert 'There are 20 places remaining' in result
@@ -113,6 +161,24 @@ class RegistrationTests(unittest.TestCase):
         assert 'form' not in response
         assert 'There are 0 places remaining' in response
 
+    @freeze_time("2012-01-01")
+    def test_WhenTheDateIsMoreThanTwoWeeksBeforeTheNextEventThenItShouldNotBePossibleToRegister(self):
+
+        #Arrange
+        event = self.create_event(20)
+        event.date = datetime(2013, 3, 12, 18, 30)
+
+        #Act
+        response = self.testapp.get("/register")
+
+        #Assert
+        self.assertEqual(response.status, "200 OK")
+        assert 'form' not in response
+
+        print response
+
+        assert 'Registration opens 26 Feb 2013 18:30' in response
+
     def test_ViewRegistrationDetails(self):
 
         #Arrange
@@ -130,6 +196,7 @@ class RegistrationTests(unittest.TestCase):
         assert 'fred@home.com' in response
         assert 'Confirm' in response
 
+    @freeze_time("2012-01-01")
     def test_ConfirmRegistration(self):
 
         #Arrange
@@ -147,6 +214,7 @@ class RegistrationTests(unittest.TestCase):
         assert 'bill' in response
         assert 'fred' in response
 
+    @freeze_time("2012-01-01")
     def test_CancelRegistration(self):
 
         #Arrange

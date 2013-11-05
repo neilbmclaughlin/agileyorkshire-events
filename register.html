@@ -26,19 +26,24 @@
     {% endfor %}
     </ul>
 
-    <p>There are {{ registrations_remaining }} places remaining</p>
 
     <hr>
 
-    {% if registrations_remaining > 0 %}
+    {% if not registration_open %}
+        <p>Registration opens {{ registration_opens.strftime("%d %b %Y %H:%M") }} </p>
+    {% else %}
+        <p>There are {{ registrations_remaining }} places remaining</p>
 
-    <h2>Register here for the next event</h2>
-    <form class="right_aligned" action="/register" method="post">
-      <label for="email_address">Email address</label><input type="textbox" name="email_address" />
-      <label for=name">Name</label><input type="textbox" name="name"/>
-      <label for="twitter_handle">Twitter handle</label><input type="textbox" name="twitter_handle"/>
-      <input type="submit" value="Register for event"></div>
-    </form>
+        {% if registrations_remaining > 0 %}
+            <h2>Register here for the next event</h2>
+            <form class="right_aligned" action="/register" method="post">
+              <label for="email_address">Email address</label><input type="textbox" name="email_address" />
+              <label for=name">Name</label><input type="textbox" name="name"/>
+              <label for="twitter_handle">Twitter handle</label><input type="textbox" name="twitter_handle"/>
+              <input type="submit" value="Register for event"></div>
+            </form>
+
+        {% endif %}
 
     {% endif %}
 
