@@ -98,8 +98,7 @@ class RegisterHandler(webapp2.RequestHandler):
             registration_opens = next_event.date - timedelta(days=14)
             registration_open = datetime.now() > registration_opens
 
-            presentations = [p.get() for p in next_event.presentation_keys]
-
+            presentations = Presentation.query(ancestor=get_group_key()).filter(Presentation.event_key == next_event.key).fetch(100)
             registrations = Registration.query(ancestor=next_event.key).fetch(100)
 
             template_values = {
@@ -177,18 +176,18 @@ class EventsHandler(webapp2.RequestHandler):
         event.title = self.request.get('event_title')
         event.description = self.request.get('event_description')
         event.capacity = int(self.request.get('event_capacity'))
+        event.registration_window = int(self.request.get('event_registration_window'))
         event_image = self.request.get('event_image')
         event.image = event_image
         presentations = self.request.get_all('event_presentations')
-        p1 = Presentation.query(ancestor=get_group_key()).filter(Presentation.name == presentations[0]).fetch(1)[0]
-        p2 = Presentation.query(ancestor=get_group_key()).filter(Presentation.name == presentations[1]).fetch(1)[0]
-        event.presentation_keys = [ p1.key, p2.key ]
+
         event_key = event.put()
 
-        p1.event_key = event_key
-        p1.put()
-        p2.event_key = event_key
-        p2.put()
+        for p in presentations:
+            presentation_key = ndb.Key(urlsafe=p)
+            presentation = presentation_key.get()
+            presentation.event_key = event_key
+            presentation.put()
 
         self.redirect('/events')
 

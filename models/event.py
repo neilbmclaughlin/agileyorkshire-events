@@ -9,9 +9,8 @@ class Event(ndb.Model):
     title = ndb.StringProperty()
     description = ndb.StringProperty(indexed=False)
     capacity = ndb.IntegerProperty()
+    registration_window = ndb.IntegerProperty()
     image = ndb.BlobProperty()
-    presentation_keys = ndb.KeyProperty(kind='Presentation', repeated=True)
-    #presentations = ndb.ComputedProperty(lambda self: [p.get() for p in self.presentation_keys])
 
     @staticmethod
     def get_next_event_by_date():

@@ -82,11 +82,12 @@ class RegistrationTests(unittest.TestCase):
     def tearDown(self):            
         self.testbed.deactivate()
 
-    def create_event(self, capacity):
+    def create_event(self, capacity=20, event_date=datetime.now() + timedelta(days=5), registration_window=5):
         event = Event(parent=ndb.Key('Group', 'AgileYorkshire'))
-        event.date = datetime.now() + timedelta(days=5)
+        event.date = event_date
         event.description = 'An event'
         event.capacity = capacity
+        event.registration_window = registration_window
         event.put()
         return event
 
@@ -164,10 +165,10 @@ class RegistrationTests(unittest.TestCase):
         assert 'There are 0 places remaining' in response
 
     @freeze_time("2012-01-01")
-    def test_WhenTheDateIsMoreThanTwoWeeksBeforeTheNextEventThenItShouldNotBePossibleToRegister(self):
+    def test_WhenTheDateIsBeforeTheRegistrationStartDateOfTheNextEventThenItShouldNotBePossibleToRegister(self):
 
         #Arrange
-        event = self.create_event(20)
+        event = self.create_event(registration_window=14)
         event.date = datetime(2013, 3, 12, 18, 30)
 
         #Act
@@ -176,8 +177,6 @@ class RegistrationTests(unittest.TestCase):
         #Assert
         self.assertEqual(response.status, "200 OK")
         assert 'form' not in response
-
-        print response
 
         assert 'Registration opens 26 Feb 2013 18:30' in response
 

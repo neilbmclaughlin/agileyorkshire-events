@@ -45,12 +45,14 @@
         <textarea name="event_description" rows="10" cols="60"></textarea>
       <label for="event_capacity">Capacity</label>
         <input type="textbox" name="event_capacity" />
+      <label for="event_registration_window">Registration Window (in days)</label>
+        <input type="textbox" name="event_registration_window" />
       <label>Image</label>
       <input type="file" name="event_image"/>
       <label for="event_presentations">Presentations</label>
         <select name="event_presentations" multiple>
             {% for presentation in presentations %}
-               <option value="{{ presentation.name }}">{{ presentation.name }}</option>
+               <option value="{{ presentation.key.urlsafe() }}">{{ presentation.name }}</option>
             {% endfor %}
         </select>
       <input type="submit" value="Create event"></div>
