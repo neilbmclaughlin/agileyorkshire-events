@@ -5,6 +5,16 @@
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
+        <ul>
+            {% for presentation in presentations %}
+                <li>{{ presentation.name }}</li>
+                <ul>
+                    <li>{{ presentation.outline }}</li>
+                    <li><a href="{{ presentation.edit_url  }}">Edit</a></li>
+                </ul>
+            {% endfor %}
+        </ul>
+
     <form class="right_aligned" action="/presentation" method="post">
       <label for=presentation_name">Name</label><input type="textbox" name="presentation_name"/>
       <label for="presentation_outline">Outline</label>

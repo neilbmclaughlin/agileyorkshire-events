@@ -26,6 +26,13 @@ def get_event_key(event_name):
 def get_group_key(group_name=DEFAULT_GROUP_NAME):
     return ndb.Key('Group', group_name)
 
+class AdminHandler(webapp2.RequestHandler):
+
+    def get(self):
+        template = JINJA_ENVIRONMENT.get_template('index.html')
+        self.response.write(template.render())
+
+
 
 class RegistrationsHandler(webapp2.RequestHandler):
 
@@ -192,11 +199,39 @@ class EventsHandler(webapp2.RequestHandler):
         self.redirect('/events')
 
 
+class PresentationEditHandler(webapp2.RequestHandler):
+
+    def get(self, presentation_id):
+        presentation = ndb.Key(urlsafe=presentation_id).get()
+        post_link = self.url_for('edit_presentation', presentation_id=presentation_id)
+        template_values = {
+            'presentation': presentation,
+            'post_link': post_link
+
+        }
+        template = JINJA_ENVIRONMENT.get_template('presentation_edit.html')
+        self.response.write(template.render(template_values))
+
+    def post(self, presentation_id):
+        presentation = ndb.Key(urlsafe=presentation_id).get()
+        presentation.name = self.request.get('presentation_name')
+        presentation.outline = self.request.get('presentation_outline')
+        presentation.put()
+        self.redirect('/presentation')
+
+
 class PresentationHandler(webapp2.RequestHandler):
 
     def get(self):
+        presentations = Presentation.query(ancestor=get_group_key()).fetch(100)
+        for presentation in presentations:
+            presentation.edit_url = self.url_for('edit_presentation', presentation_id=presentation.key.urlsafe())
+
         template = JINJA_ENVIRONMENT.get_template('presentation.html')
-        self.response.write(template.render())
+        template_values = {
+            'presentations': presentations
+        }
+        self.response.write(template.render(template_values))
 
     def post(self):
         presentation = Presentation(parent=get_group_key())
@@ -219,13 +254,15 @@ class ImagesHandler(webapp2.RequestHandler):
             self.response.out.write('No image')
 
 application = webapp2.WSGIApplication([
+    ('/admin', AdminHandler),
     ('/registrations', RegistrationsHandler),
     webapp2.Route(r'/confirm_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=ConfirmationHandler, name='confirm_registration'),
     webapp2.Route(r'/cancel_registration/<registration_id:[a-zA-Z0-9-_]+>', handler=CancellationHandler, name='cancel_registration'),
     ('/events/next', NextEventHandler),
     ('/events', EventsHandler),
     ('/register', RegisterHandler),
-    ('/presentation', PresentationHandler),
+    webapp2.Route(r'/presentations/<presentation_id:[a-zA-Z0-9-_]+>', handler=PresentationEditHandler, name='edit_presentation'),
+    (r'/presentations', PresentationHandler),
     webapp2.Route(r'/registration/<registration_id:[a-zA-Z0-9-_]+>', handler=RegistrationHandler, name='registration'),
     ('/images', ImagesHandler),
 ], debug=True)

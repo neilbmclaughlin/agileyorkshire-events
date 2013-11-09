@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
@@ -5,13 +6,11 @@
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
-    <h1>Agile Yorkshire Meetup: {{ event_name }}</h1>
-    <h2>Registrations</h2>
-    <ul>
-    {% for registration in registrations %}
-        <li>{{ '%s (%s)' % ( registration.name, registration.twitter_handle) }}</li>
-    {% endfor %}
-    </ul>
+    <h1>Agile Yorkshire Admin</h1>
+        <ul>
+            <p><a href="/presentations">List/Create Presentations</a></p>
+            <p><a href="/events">List/Create Events</a></p>
+        </ul>
   </body>
 </html>
 {% endautoescape %}

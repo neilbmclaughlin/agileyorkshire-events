@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <form class="right_aligned" action="{{post_link}}" method="post">
+      <label for=presentation_name">Name</label><input type="textbox" name="presentation_name" value="{{ presentation.name }} "/>
+      <label for="presentation_outline">Outline</label>
+        <textarea name="presentation_outline" rows="10" cols="60">{{ presentation.outline }}</textarea>
+      <input type="submit" value="Submit presentation"/></div>
+    </form>
+  </body>
+</html>
+{% endautoescape %}

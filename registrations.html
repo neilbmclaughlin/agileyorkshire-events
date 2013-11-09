@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <h1>Agile Yorkshire Meetup: {{ event_name }}</h1>
+    <h2>Registrations</h2>
+    <ul>
+    {% for registration in registrations %}
+        <li>{{ '%s (%s)' % ( registration.name, registration.twitter_handle) }}</li>
+    {% endfor %}
+    </ul>
+  </body>
+</html>
+{% endautoescape %}
+
