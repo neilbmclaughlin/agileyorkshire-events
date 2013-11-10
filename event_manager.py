@@ -13,25 +13,28 @@ from models.registration import Registration
 from models.presentation import Presentation
 
 JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__) + '/templates'),
     extensions=['jinja2.ext.autoescape'])
 
+
 DEFAULT_GROUP_NAME = 'AgileYorkshire'
+
 
 
 def get_event_key(event_name):
     """Constructs a Datastore key for a Registration entity with event_date."""
     return ndb.Key('Event', event_name)
 
+
 def get_group_key(group_name=DEFAULT_GROUP_NAME):
     return ndb.Key('Group', group_name)
+
 
 class AdminHandler(webapp2.RequestHandler):
 
     def get(self):
         template = JINJA_ENVIRONMENT.get_template('index.html')
         self.response.write(template.render())
-
 
 
 class RegistrationsHandler(webapp2.RequestHandler):
@@ -217,7 +220,7 @@ class PresentationEditHandler(webapp2.RequestHandler):
         presentation.name = self.request.get('presentation_name')
         presentation.outline = self.request.get('presentation_outline')
         presentation.put()
-        self.redirect('/presentation')
+        self.redirect(self.url_for('presentations'))
 
 
 class PresentationHandler(webapp2.RequestHandler):
@@ -229,7 +232,8 @@ class PresentationHandler(webapp2.RequestHandler):
 
         template = JINJA_ENVIRONMENT.get_template('presentation.html')
         template_values = {
-            'presentations': presentations
+            'presentations': presentations,
+            'post_url': self.url_for('presentations')
         }
         self.response.write(template.render(template_values))
 
@@ -238,7 +242,7 @@ class PresentationHandler(webapp2.RequestHandler):
         presentation.name = self.request.get('presentation_name')
         presentation.outline = self.request.get('presentation_outline')
         presentation.put()
-        self.redirect('/presentation')
+        self.redirect(self.url_for('presentations'))
 
 
 class ImagesHandler(webapp2.RequestHandler):
@@ -262,7 +266,9 @@ application = webapp2.WSGIApplication([
     ('/events', EventsHandler),
     ('/register', RegisterHandler),
     webapp2.Route(r'/presentations/<presentation_id:[a-zA-Z0-9-_]+>', handler=PresentationEditHandler, name='edit_presentation'),
-    (r'/presentations', PresentationHandler),
+    webapp2.Route(r'/presentations', handler=PresentationHandler, name='presentations'),
     webapp2.Route(r'/registration/<registration_id:[a-zA-Z0-9-_]+>', handler=RegistrationHandler, name='registration'),
     ('/images', ImagesHandler),
 ], debug=True)
+
+
