@@ -7,17 +7,23 @@ from google.appengine.ext import ndb
 from google.appengine.api import mail
 
 import webapp2
-import jinja2
+
 from models.event import Event
 from models.registration import Registration
 from models.presentation import Presentation
 
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__) + '/templates'),
+from webapp2_extras import sessions, jinja2
+from jinja2.runtime import TemplateNotFound
+
+from secrets import SESSION_KEY
+
+JINJA_ENVIRONMENT = jinja2.jinja2.Environment(
+    loader=jinja2.jinja2.FileSystemLoader(os.path.dirname(__file__) + '/templates'),
     extensions=['jinja2.ext.autoescape'])
 
 
 DEFAULT_GROUP_NAME = 'AgileYorkshire'
+
 
 
 
@@ -28,6 +34,46 @@ def get_event_key(event_name):
 
 def get_group_key(group_name=DEFAULT_GROUP_NAME):
     return ndb.Key('Group', group_name)
+
+
+class BaseRequestHandler(webapp2.RequestHandler):
+
+    def dispatch(self):
+        # Get a session store for this request.
+        self.session_store = sessions.get_store(request=self.request)
+
+        try:
+            # Dispatch the request.
+            webapp2.RequestHandler.dispatch(self)
+        finally:
+            # Save all sessions.
+            self.session_store.save_sessions(self.response)
+
+    @webapp2.cached_property
+    def jinja2(self):
+        """Returns a Jinja2 renderer cached in the app registry"""
+        return jinja2.get_jinja2(app=self.app)
+
+    @webapp2.cached_property
+    def session(self):
+        """Returns a session using the default cookie key"""
+        return self.session_store.get_session()
+
+    def render(self, template_name, template_vars={}):
+        # Preset values for the template
+        values = {
+            'url_for': self.uri_for,
+            'flashes': self.session.get_flashes()
+        }
+
+        # Add manually supplied template values
+        values.update(template_vars)
+
+        # read the template or 404.html
+        try:
+            self.response.write(self.jinja2.render_template(template_name, **values))
+        except TemplateNotFound:
+            self.abort(404)
 
 
 class AdminHandler(webapp2.RequestHandler):
@@ -179,7 +225,7 @@ class EventsHandler(webapp2.RequestHandler):
         }
         template = JINJA_ENVIRONMENT.get_template('events.html')
         self.response.write(template.render(template_values))
-        
+
     def post(self):
         event = Event(parent=get_group_key())
         event.date = datetime.strptime( self.request.get('event_date'), "%d %b %Y")
@@ -223,25 +269,35 @@ class PresentationEditHandler(webapp2.RequestHandler):
         self.redirect(self.url_for('presentations'))
 
 
-class PresentationHandler(webapp2.RequestHandler):
+class PresentationHandler(BaseRequestHandler):
 
     def get(self):
+
+        #https://simpleauth.appspot.com/
+
+        session_store = sessions.get_store(request=self.request)
+        flashes = session_store.get_session().get_flashes()
+
+        print flashes
+
         presentations = Presentation.query(ancestor=get_group_key()).fetch(100)
         for presentation in presentations:
             presentation.edit_url = self.url_for('edit_presentation', presentation_id=presentation.key.urlsafe())
 
-        template = JINJA_ENVIRONMENT.get_template('presentation.html')
         template_values = {
+            'flashes': flashes,
             'presentations': presentations,
             'post_url': self.url_for('presentations')
         }
-        self.response.write(template.render(template_values))
+        self.render('presentation.html', template_values)
 
     def post(self):
         presentation = Presentation(parent=get_group_key())
         presentation.name = self.request.get('presentation_name')
         presentation.outline = self.request.get('presentation_outline')
         presentation.put()
+        session_store = sessions.get_store(request=self.request)
+        session_store.get_session().add_flash('Presentation Created', level='alert')
         self.redirect(self.url_for('presentations'))
 
 
@@ -257,6 +313,16 @@ class ImagesHandler(webapp2.RequestHandler):
         else:
             self.response.out.write('No image')
 
+
+
+# webapp2 config
+app_config = {
+  'webapp2_extras.sessions': {
+    'cookie_name': '_simpleauth_sess',
+    'secret_key': SESSION_KEY
+  },
+}
+
 application = webapp2.WSGIApplication([
     ('/admin', AdminHandler),
     ('/registrations', RegistrationsHandler),
@@ -269,6 +335,6 @@ application = webapp2.WSGIApplication([
     webapp2.Route(r'/presentations', handler=PresentationHandler, name='presentations'),
     webapp2.Route(r'/registration/<registration_id:[a-zA-Z0-9-_]+>', handler=RegistrationHandler, name='registration'),
     ('/images', ImagesHandler),
-], debug=True)
+], debug=True, config=app_config)
 
 

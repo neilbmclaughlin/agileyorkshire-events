@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
-<head>
-    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
-  </head>
-  <body>
+    <head>
+        <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+    </head>
+    <body>
+        {% for flash in flashes %}
+          <h2>{{ flash[0] }}</h2>
+        {% endfor %}
         <ul>
             {% for presentation in presentations %}
                 <li>{{ presentation.name }}</li>
