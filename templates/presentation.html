@@ -6,7 +6,7 @@
     </head>
     <body>
         {% for flash in flashes %}
-          <h2>{{ flash[0] }}</h2>
+          <div class="flash"><p>{{ flash[0] }}</p></div>
         {% endfor %}
         <ul>
             {% for presentation in presentations %}
